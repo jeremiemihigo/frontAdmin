@@ -7,7 +7,7 @@ import axios from 'axios';
 import { postReponse } from 'Redux/Reponses';
 import { lien, config } from 'static/Lien';
 import { CreateContexte } from 'Context';
-import { Alert } from '../../../node_modules/@mui/lab/index';
+import { Alert } from '@mui/lab';
 import AutoComplement from 'Control/AutoComplet';
 import { Checkbox, FormControl, FormControlLabel, FormGroup, Box } from '@mui/material';
 import DirectionSnackbar from 'Control/SnackBar';
@@ -34,7 +34,7 @@ function ReponsesComponent({ update }) {
       [name]: value
     });
   };
-  const { demande, setDemande } = useContext(CreateContexte);
+  const { demande } = useContext(CreateContexte);
   const { codeCu, codeClient, consExpDays, nomClient } = intial;
   let [status, setStatut] = React.useState({ payement: '', statut: '' });
   const { payement, statut } = status;
@@ -85,7 +85,6 @@ function ReponsesComponent({ update }) {
 
   const userConnect = useSelector((state) => state.user?.user);
   const dispatch = useDispatch();
-  const [openBackdrop, setBackDrop] = React.useState(false);
   const reponseData = (e) => {
     e.preventDefault();
     if (valueRegionSelect && valueShopSelect && valueRegionSelect.idZone !== valueShopSelect.idZone) {
@@ -104,7 +103,6 @@ function ReponsesComponent({ update }) {
           setOpenSnack(true);
         } else {
           setSending(true);
-          setBackDrop(true);
           const datass = {
             idDemande: demande.idDemande,
             codeClient: codeClient.toUpperCase(),
@@ -119,8 +117,6 @@ function ReponsesComponent({ update }) {
           };
           dispatch(postReponse(datass));
           setSending(false);
-          setDemande();
-          setBackDrop(false);
           reset();
         }
       }
@@ -212,13 +208,19 @@ function ReponsesComponent({ update }) {
 
   return (
     <Grid>
-      <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={openBackdrop}>
-        <div>
-          <p style={{ textAlign: 'center', margin: '0px', padding: '0px' }}>Sending {demande?.idDemande}...</p>
-        </div>
-      </Backdrop>
+      {reponse.postDemande === 'pending' && (
+        <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={true}>
+          <div>
+            <p style={{ textAlign: 'center', margin: '0px', padding: '0px' }}>Sending {demande?.idDemande}...</p>
+          </div>
+        </Backdrop>
+      )}
 
-      {reponse.postDemande === 'rejected' && <Alert severity="warning">{reponse.postDemandeError}</Alert>}
+      {reponse.postDemande === 'rejected' && (
+        <Alert variant="filled" severity="error">
+          {reponse.postDemandeError}
+        </Alert>
+      )}
       {openSnack && <DirectionSnackbar message={message} open={openSnack} setOpen={setOpenSnack} />}
       <Grid container>
         <Grid item lg={10} xs={10}>
