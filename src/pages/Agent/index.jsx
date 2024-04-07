@@ -1,8 +1,7 @@
 import Popup from 'static/Popup';
 import React, { memo } from 'react';
 import AddAgent from './Agent';
-import axios from 'axios';
-import { lien, config } from 'static/Lien';
+
 import { DataGrid } from '@mui/x-data-grid';
 import { Fab, Tooltip, Paper } from '@mui/material';
 import { Edit, Block, RestartAlt } from '@mui/icons-material';
@@ -10,7 +9,7 @@ import DirectionSnackbar from 'Control/SnackBar';
 import { useSelector, useDispatch } from 'react-redux';
 import ExcelFile from './ExcelFile';
 import { Button } from 'antd';
-import { BloquerAgent } from 'Redux/Agent';
+import { BloquerAgent, Reinitialiser } from 'Redux/Agent';
 
 function AgentListe() {
   const [openAgent, setOpenAgent] = React.useState(false);
@@ -20,11 +19,7 @@ function AgentListe() {
   const allListe = useSelector((state) => state.agent);
 
   const resetPassword = (agent) => {
-    axios.put(lien + '/reset', { id: agent._id }, config).then((result) => {
-      if (result.status === 200) {
-        setOpen(true);
-      }
-    });
+    dispatch(Reinitialiser({ id: agent._id }));
   };
   const [dataTo, setDataTo] = React.useState();
   const update = (donner, e) => {
@@ -32,12 +27,12 @@ function AgentListe() {
     setDataTo(donner);
     setOpenAgentUpdate(true);
   };
-  const [wait, setWait] = React.useState(false);
+  const [wait, setWait] = React.useState('');
   const bloquer = (agent) => {
-    setWait(true);
+    setWait(agent._id);
     let data = { id: agent._id, value: !agent.active };
     dispatch(BloquerAgent(data));
-    setWait(false);
+    setWait('');
   };
   const user = useSelector((state) => state.user?.user);
 
@@ -68,7 +63,7 @@ function AgentListe() {
       }
     },
     {
-      field: 'region',
+      field: 'region.0.denomination',
       headerName: 'Region',
       width: 100,
       editable: false,
@@ -109,25 +104,29 @@ function AgentListe() {
       renderCell: (params) => {
         return (
           <p>
-            <Tooltip title="Modifiez">
-              <Fab color="primary" size="small" onClick={(e) => update(params.row, e)}>
-                <Edit fontSize="small" />
-              </Fab>
-            </Tooltip>
-            {user.fonction === 'superUser' && (
-              <Tooltip title="Réinitialisez ses accès" sx={{ margin: '10px' }}>
-                <Fab color="success" size="small" onClick={() => resetPassword(params.row)}>
-                  <RestartAlt fontSize="small" />
+            {user?.fonction === 'superUser' && (
+              <Tooltip title="Modifiez">
+                <Fab color="primary" size="small" onClick={(e) => update(params.row, e)}>
+                  <Edit fontSize="small" />
                 </Fab>
               </Tooltip>
             )}
 
-            {wait ? (
-              'Wait...'
-            ) : (
+            <>
+              {allListe.reinitialiser === 'pending' ? (
+                <>Wait...</>
+              ) : (
+                <Tooltip title="Réinitialisez ses accès" sx={{ margin: '10px' }}>
+                  <Fab color="success" size="small" onClick={() => resetPassword(params.row)}>
+                    <RestartAlt fontSize="small" />
+                  </Fab>
+                </Tooltip>
+              )}
+            </>
+            {user?.fonction === 'superUser' && (
               <Tooltip title={params.row.active ? 'Bloquer' : 'Débloquer'}>
                 <Fab color="warning" size="small" onClick={() => bloquer(params.row)}>
-                  <Block fontSize="small" />
+                  {wait === params.row._id ? 'Wait' : <Block fontSize="small" />}
                 </Fab>
               </Tooltip>
             )}
@@ -138,14 +137,16 @@ function AgentListe() {
   ];
   return (
     <Paper elevation={3} sx={{ padding: '5px' }}>
-      <div style={{ display: 'flex' }}>
-        <div style={{ marginRight: '10px' }}>
-          <Button onClick={() => setOpenAgent(true)} type="primary">
-            Ajoutez un agent
-          </Button>
+      {user?.fonction === 'superUser' && (
+        <div style={{ display: 'flex' }}>
+          <div style={{ marginRight: '10px' }}>
+            <Button onClick={() => setOpenAgent(true)} type="primary">
+              Ajoutez un agent
+            </Button>
+          </div>
+          <ExcelFile />
         </div>
-        <ExcelFile />
-      </div>
+      )}
 
       {open && <DirectionSnackbar open={open} setOpen={setOpen} message="Opération effectuée" />}
 

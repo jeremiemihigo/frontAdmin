@@ -6,12 +6,12 @@ import { lien_image } from 'static/Lien';
 // import { PostDemandeFunction, ReadDemande } from "../Redux/Demande";
 import { CreateContexte } from 'Context';
 import './style.css';
-import moment from 'moment';
 import BasicTabs from 'Control/Tabs';
 import FeedbackComponent from './FeedBack';
 import ReponsesComponent from './ReponseComponent';
 import { Grid, Typography } from '@mui/material';
 import { Image, Space, message } from 'antd';
+import Chat from './Chat';
 
 function ReponseAdmin(props) {
   const { update } = props;
@@ -60,22 +60,7 @@ function ReponseAdmin(props) {
           <p>Statut du client : {`${demandes.statut === 'allumer' ? 'allumé' : 'éteint'}`} </p>
           <p>Feedback : {demandes.raison.toLowerCase()}</p>
         </div>
-
-        {demandes.conversation.length > 0 && (
-          <div>
-            {demandes.conversation.map((index) => {
-              return (
-                <div key={index._id} className={index.sender === 'co' ? 'co' : 'agent'}>
-                  <p className={index.sender === 'co' ? 'message' : 'messageAgent'}>{index.message}</p>
-                  <p className="heures">
-                    {index.codeAgent + ' ----------- '}
-                    {moment(index.createdAt).fromNow()}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <Chat demandes={demandes.conversation} />
       </>
     );
   }
